@@ -91,7 +91,7 @@ def placements_qa():
                 st.write("Placements a traficar:")
                 st.dataframe(traffic_result_df)
 
-                # Mostrar botón para verificar si los placements están actualizados en CM360
+                # Mostrar botón para verificar si los placements están cargados en CM360
                 if st.button("Placements uploaded on CM360?", key="cm360_check") or st.session_state.get("cm360_checked", False):
                     st.session_state.cm360_checked = True  # Activar estado del segundo botón
                     # Verificar si todos los placements a traficar están en el archivo Export Legacy
