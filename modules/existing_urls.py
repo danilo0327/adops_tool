@@ -47,7 +47,79 @@ def existing_urls():
             st.dataframe(export_df)
 
             # Agregar lógica específica del módulo
-            st.write("Aquí puedes realizar el QA de placements.")
+            st.write("Aquí puedes realizar el QA de URLs.")
+
+            # Mostrar botón para comenzar QA de creatives
+            if st.button("Start URLs QA") or st.session_state.get("url_qa_started", False):
+                st.session_state.url_qa_started = True  # Activar estado del botón
+                # Obtener los valores únicos de la columna "Landing Page" en TS 
+                # y la columna "Creative Click-Through URL" en el export
+                traffic_unique_url = traffic_df["Landing Page"].nunique()
+                export_unique_url = export_df["Creative Click-Through URL"].nunique()
+
+                # Crear una tabla con los resultados
+                data = {
+                    "Archivo": ["Traffic Sheet", "Legacy Export"],
+                    "No de URLs": [traffic_unique_url, export_unique_url]
+                }
+
+                result_df = pd.DataFrame(data)
+
+                # Mostrar la tabla con los resultados
+                st.write("Resumen de URLs por archivo:")
+                st.dataframe(result_df)
+
+                # Filtrar los placements que son "New Placement" en el Traffic Sheet
+                new_placement_df = traffic_df[traffic_df["Status"] == "New Placement"]
+
+                # Contar cuántos URLs (unicas) tienen el estado "New Placement"
+                new_url_count = new_placement_df["Landing Page"].nunique()
+
+                # Mostrar mensaje con la cantidad de URLs a traficar
+                st.write(f"La cantidad de URLs a traficar son: {new_url_count}")
+
+                # Obtener los valores únicos de la columna "Landing Page" donde "Status" es "New Placement"
+                url_to_traffic = new_placement_df["Landing Page"].unique()
+
+                # Crear la tabla con las URLs a traficar
+                traffic_data = {
+                    "URLs To Traffic": url_to_traffic
+                }
+
+                traffic_result_df = pd.DataFrame(traffic_data)
+
+                # Mostrar la tabla con las URLs a traficar
+                st.write("URLs a traficar:")
+                st.dataframe(traffic_result_df)
+
+                # Mostrar botón para verificar si las URLs están cargados en CM360
+                if st.button("URLs uploaded on CM360?", key="url_cretives_check") or st.session_state.get("url_creatives_checked", False):
+                    st.session_state.url_creatives_checked = True  # Activar estado del segundo botón
+                    # Verificar si todas las URLs a traficar están en el archivo Export Legacy
+                    export_url = export_df["Creative Click-Through URL"].unique()
+                    all_url_in_export = all(
+                        url in export_url for url in url_to_traffic
+                    )
+
+                    # Mostrar el resultado de la verificación
+                    if all_url_in_export:
+                        st.success("Yes, all URLs were uploaded on CM360.")
+                    else:
+                        st.error("No, not all URLs were uploaded on CM360. Please reach to Planning Team")
+
+                    # Mostrar las URLs a traficar que no están en el archivo Export Legacy
+                    missing_url = [
+                        url for url in url_to_traffic if url not in export_url
+                    ]
+
+                    if missing_url:
+                        st.warning(f"The following URLs need to be uploaded on CM360:")
+                        missing_data = {"Missing URLs": missing_url}
+                        missing_df = pd.DataFrame(missing_data)
+                        st.dataframe(missing_df)
+                    else:
+                        st.success("All the URLs are on CM360, you can continue!.")
+
         except Exception as e:
             st.error(f"Error al cargar los archivos: {e}")
     else:
